@@ -13,31 +13,41 @@ namespace Games.Platformer2D
         [SerializeField] private int platformsCount = 10;
         [SerializeField] private int minTilesWidth = 3;
         [SerializeField] private int maxTilesWidth = 8;
-        [SerializeField] private int minTilesHeight = 1;
-        [SerializeField] private int maxTilesHeight = 10;
+        [SerializeField] private int tilesHeight = 10;
         [SerializeField] private float tileWidth = 1f;
         [SerializeField] private float tileHeight = 0.5f;
         [SerializeField] private float minGap = 2f;
         [SerializeField] private float maxGap = 5f;
         [SerializeField] private float amplitude = 2f;
         [SerializeField] private float frequency1 = 1f;
-        
+        [SerializeField] private Vector3 startPosition = Vector3.zero;
+        [SerializeField] private Vector3 endPosition = Vector3.zero;
+
         [SerializeField] private List<Chunk> chunks = new List<Chunk>();
-        
+
         private void Start()
         {
             GenerateChunks();
         }
 
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawCube(startPosition,Vector3.one);
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawCube(endPosition,Vector3.one);
+        }
+
         private void GenerateChunks()
         {
-            float currentX = 0f;
+            Vector3 transformPosition = transform.position;
+            float currentX = transformPosition.x;
 
             for (int i = 0; i < platformsCount; i++)
             {
                 int platformWidthTiles = UnityEngine.Random.Range(minTilesWidth, maxTilesWidth);
-                int heightTiles = UnityEngine.Random.Range(minTilesHeight, maxTilesHeight);
 
+                // Calculate gap and update currentX
                 float gap = UnityEngine.Random.Range(minGap, maxGap);
                 if (chunks.Count > 0)
                 {
@@ -49,20 +59,25 @@ namespace Games.Platformer2D
                     currentX += gap;
                 }
 
+                // Calculate y position of the chunk
                 float y = amplitude * Mathf.Max(
                     Mathf.Sin(Time.time * frequency1 + i * 0.1f),
                     Mathf.Cos(Time.time * frequency1 + i * 0.2f)
                 );
+                Vector3 chunkPosition = new Vector3(currentX, y + transformPosition.y, 0f);
 
-                Vector3 chunkPosition = new Vector3(currentX, y, 0f);
-
+                // Create a new chunk GameObject
                 GameObject chunk = new GameObject($"Chunk_{i}");
-                chunk.transform.position = chunkPosition;
+                chunk.transform.position = chunkPosition ;
+                chunk.transform.parent = transform;
 
-                GeneratePlatformTiles(chunk, platformWidthTiles, heightTiles);
+                // Generate tiles for the chunk
+                GeneratePlatformTiles(chunk, platformWidthTiles, tilesHeight);
 
-                chunks.Add(new Chunk(chunk, chunkPosition, platformWidthTiles, heightTiles));
+                chunks.Add(new Chunk(chunk, chunkPosition, platformWidthTiles, tilesHeight));
             }
+            startPosition = chunks[0].position;
+            endPosition = chunks[chunks.Count-1].position;
         }
 
         private void GeneratePlatformTiles(GameObject chunk, int widthTiles, int heightTiles)
@@ -71,7 +86,7 @@ namespace Games.Platformer2D
             {
                 for (int x = 0; x < widthTiles; x++)
                 {
-                    Vector3 tilePosition = new Vector3(x , y , 0f);
+                    Vector3 tilePosition = new Vector3(x - (float)widthTiles/2, y - (float)heightTiles, 0f);
 
                     GameObject tilePrefab = (y == heightTiles - 1) ? topTilePrefab : normalTilePrefab;
 
