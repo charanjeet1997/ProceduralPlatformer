@@ -1077,6 +1077,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   normalTilePrefab: {fileID: 6504617403515615705, guid: 91ac5fe7bfc4aed478628ed8567229cc, type: 3}
   topTilePrefab: {fileID: 1611918907729472440, guid: 4445b7b4e8febfd489d4e72229851de3, type: 3}
+  bottomTilePrefab: {fileID: 1611918907729472440, guid: 8c38d6d170f39484d9c51d7bbdeef43d, type: 3}
+  topLeftTilePrefab: {fileID: 1611918907729472440, guid: 78f996ddbbc67d345a008d2b4e38d525, type: 3}
+  topRightTilePrefab: {fileID: 1611918907729472440, guid: 057dbd00b9c37474988ab77c20c291f1, type: 3}
+  bottomLeftTilePrefab: {fileID: 1611918907729472440, guid: 7da4885412867df4099ee19718fdad41, type: 3}
+  bottomRightTilePrefab: {fileID: 1611918907729472440, guid: 2df2499a3b1144d4589eb007d6e0c068, type: 3}
+  midLeftTilePrefab: {fileID: 6504617403515615705, guid: 0b4b57019226bb549a8def0949bb1f26, type: 3}
+  midRightTilePrefab: {fileID: 6504617403515615705, guid: e48031626ef74bd4590239ac98cb8632, type: 3}
   platformsCount: 5
   minTilesWidth: 5
   maxTilesWidth: 10

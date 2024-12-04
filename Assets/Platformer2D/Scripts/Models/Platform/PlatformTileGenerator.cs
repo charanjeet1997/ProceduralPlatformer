@@ -4,31 +4,55 @@ namespace Games.Platformer2D
 {
     public class PlatformTileGenerator : IPlatformTileGenerator
     {
-        private GameObject normalTilePrefab;
-        private GameObject topTilePrefab;
+        private readonly GameObject normalTilePrefab;
+        private readonly GameObject topTilePrefab;
+        private readonly GameObject bottomTilePrefab;
+        private readonly GameObject topLeftTilePrefab;
+        private readonly GameObject topRightTilePrefab;
+        private readonly GameObject bottomLeftTilePrefab;
+        private readonly GameObject bottomRightTilePrefab;
+        private readonly GameObject midLeftTilePrefab;
+        private readonly GameObject midRightTilePrefab;
 
-        public PlatformTileGenerator(GameObject normalTilePrefab, GameObject topTilePrefab)
+        public PlatformTileGenerator(
+            GameObject normalTilePrefab,
+            GameObject topTilePrefab,
+            GameObject bottomTilePrefab,
+            GameObject topLeftTilePrefab,
+            GameObject topRightTilePrefab,
+            GameObject bottomLeftTilePrefab,
+            GameObject bottomRightTilePrefab,
+            GameObject midLeftTilePrefab,
+            GameObject midRightTilePrefab)
         {
             this.normalTilePrefab = normalTilePrefab;
             this.topTilePrefab = topTilePrefab;
+            this.bottomTilePrefab = bottomTilePrefab;
+            this.topLeftTilePrefab = topLeftTilePrefab;
+            this.topRightTilePrefab = topRightTilePrefab;
+            this.bottomLeftTilePrefab = bottomLeftTilePrefab;
+            this.bottomRightTilePrefab = bottomRightTilePrefab;
+            this.midLeftTilePrefab = midLeftTilePrefab;
+            this.midRightTilePrefab = midRightTilePrefab;
         }
 
-        public void GenerateTiles(GameObject chunk, int widthTiles, int heightTiles)
+        public void GenerateTiles(GameObject parent, int width, int height)
         {
-            // Create and configure the top tile
-            GameObject topTile = GameObject.Instantiate(topTilePrefab, chunk.transform);
-            topTile.transform.localPosition = new Vector3(0, -0.5f, 0);
-           // topTile.transform.localScale = new Vector3(widthTiles, 1, 1); // Scale top tile to width
-            topTile.GetComponent<SpriteRenderer>().size = new Vector2(widthTiles, 0.5f);
-            topTile.GetComponent<BoxCollider2D>().size = new Vector2(widthTiles, 0.5f);
-            topTile.transform.localScale = Vector3.one;
-            // Create and configure the normal tile
-            GameObject normalTile = GameObject.Instantiate(normalTilePrefab, chunk.transform);
-            normalTile.transform.localPosition = new Vector3(0, -(heightTiles / 2f) - 0.75f, 0);
-            //normalTile.transform.localScale = new Vector3(widthTiles, heightTiles, 1); // Scale normal tile to width and height
-            normalTile.GetComponent<SpriteRenderer>().size = new Vector2(widthTiles, heightTiles);
-            normalTile.GetComponent<BoxCollider2D>().size = new Vector2(widthTiles, heightTiles);
-            normalTile.transform.localScale = Vector3.one;
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    GameObject tilePrefab = normalTilePrefab;
+
+                    if (y == 0) tilePrefab = bottomTilePrefab;
+                    else if (y == height - 1) tilePrefab = topTilePrefab;
+                    else if (x == 0 && y == height - 1) tilePrefab = topLeftTilePrefab;
+                    else if (x == width - 1 && y == height - 1) tilePrefab = topRightTilePrefab;
+
+                    GameObject tile = Object.Instantiate(tilePrefab, parent.transform);
+                    tile.transform.localPosition = new Vector3(x, y - height, 0f);
+                }
+            }
         }
     }
 }

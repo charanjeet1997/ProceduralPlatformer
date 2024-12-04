@@ -8,6 +8,13 @@ namespace Games.Platformer2D
     {
         [SerializeField] private GameObject normalTilePrefab;
         [SerializeField] private GameObject topTilePrefab;
+        [SerializeField] private GameObject bottomTilePrefab;
+        [SerializeField] private GameObject topLeftTilePrefab;
+        [SerializeField] private GameObject topRightTilePrefab;
+        [SerializeField] private GameObject bottomLeftTilePrefab;
+        [SerializeField] private GameObject bottomRightTilePrefab;
+        [SerializeField] private GameObject midLeftTilePrefab;
+        [SerializeField] private GameObject midRightTilePrefab;
         [SerializeField] private int platformsCount = 10;
         [SerializeField] private int minTilesWidth = 3;
         [SerializeField] private int maxTilesWidth = 8;
@@ -44,7 +51,14 @@ namespace Games.Platformer2D
             chunkGenerator = new ChunkGenerator();
             platformTileGenerator = new PlatformTileGenerator(
                 normalTilePrefab,
-                topTilePrefab
+                topTilePrefab,
+                bottomTilePrefab,
+                topLeftTilePrefab,
+                topRightTilePrefab,
+                bottomLeftTilePrefab,
+                bottomRightTilePrefab,
+                midLeftTilePrefab,
+                midRightTilePrefab
             );
             obstacleGenerator = new ObstacleGenerator(obstaclePrefabs, obstacleSpawnChance);
         }
