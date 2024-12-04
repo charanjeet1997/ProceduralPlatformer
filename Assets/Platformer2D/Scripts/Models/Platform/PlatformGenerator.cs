@@ -1,12 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace Games.Platformer2D
 {
-    using UnityEngine;
-    using System;
-    using System.Collections;
-
-    public class PlatformGenerator : MonoBehaviour
+    public class PlatformGenerator : MonoBehaviour, IPlatformGenerator
     {
         [SerializeField] private GameObject normalTilePrefab;
         [SerializeField] private GameObject topTilePrefab;
@@ -19,99 +17,111 @@ namespace Games.Platformer2D
         [SerializeField] private float minGap = 2f;
         [SerializeField] private float maxGap = 5f;
         [SerializeField] private float amplitude = 2f;
-        [SerializeField] private float frequency1 = 1f;
-        [SerializeField] private Vector3 startPosition = Vector3.zero;
-        [SerializeField] private Vector3 endPosition = Vector3.zero;
+        [SerializeField] private float frequency = 1f;
+        [SerializeField] private Transform playerTransform;
+        [SerializeField] private Vector3 startPosition;
+        [SerializeField] private DifficultyManager difficultyManager;
+        [SerializeField] private DifficultyLevel currentDifficulty;
+        private IChunkGenerator chunkGenerator;
+        private IPlatformTileGenerator platformTileGenerator;
 
-        [SerializeField] private List<Chunk> chunks = new List<Chunk>();
+        private Queue<Chunk> chunkPool = new Queue<Chunk>();
+        [SerializeField]private List<Chunk> activeChunks = new List<Chunk>();
+
+        private float recycleThreshold = 20f; // Distance before recycling chunks
+        private float lastGeneratedX;
+
+        public Vector3 StartPosition => startPosition;
+        
+        
+        [SerializeField] private GameObject[] obstaclePrefabs;
+        [SerializeField] private float obstacleSpawnChance = 0.3f;
+
+        private IObstacleGenerator obstacleGenerator;
+
+        private void Awake()
+        {
+            chunkGenerator = new ChunkGenerator();
+            platformTileGenerator = new PlatformTileGenerator(
+                normalTilePrefab,
+                topTilePrefab
+            );
+            obstacleGenerator = new ObstacleGenerator(obstaclePrefabs, obstacleSpawnChance);
+        }
 
         private void Start()
         {
-            GenerateChunks();
-        }
-
-        private void OnDrawGizmos()
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawCube(startPosition,Vector3.one);
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawCube(endPosition,Vector3.one);
-        }
-
-        private void GenerateChunks()
-        {
-            Vector3 transformPosition = transform.position;
-            float currentX = transformPosition.x;
-
             for (int i = 0; i < platformsCount; i++)
             {
-                int platformWidthTiles = UnityEngine.Random.Range(minTilesWidth, maxTilesWidth);
-
-                // Calculate gap and update currentX
-                float gap = UnityEngine.Random.Range(minGap, maxGap);
-                if (chunks.Count > 0)
-                {
-                    Chunk lastChunk = chunks[chunks.Count - 1];
-                    currentX = lastChunk.position.x + lastChunk.width * tileWidth + gap;
-                }
-                else
-                {
-                    currentX += gap;
-                }
-
-                // Calculate y position of the chunk
-                float y = amplitude * Mathf.Max(
-                    Mathf.Sin(Time.time * frequency1 + i * 0.1f),
-                    Mathf.Cos(Time.time * frequency1 + i * 0.2f)
-                );
-                Vector3 chunkPosition = new Vector3(currentX, y + transformPosition.y, 0f);
-
-                // Create a new chunk GameObject
-                GameObject chunk = new GameObject($"Chunk_{i}");
-                chunk.transform.position = chunkPosition ;
-                chunk.transform.parent = transform;
-
-                // Generate tiles for the chunk
-                GeneratePlatformTiles(chunk, platformWidthTiles, tilesHeight);
-
-                chunks.Add(new Chunk(chunk, chunkPosition, platformWidthTiles, tilesHeight));
+                difficultyManager.SetDifficulty(currentDifficulty);
+                GenerateNextPlatform();
+                startPosition = activeChunks[0].chunk.transform.position + new Vector3(1, 0, 0);
             }
-            startPosition = chunks[0].position;
-            endPosition = chunks[chunks.Count-1].position;
         }
 
-        private void GeneratePlatformTiles(GameObject chunk, int widthTiles, int heightTiles)
+        private void Update()
         {
-            for (int y = 0; y < heightTiles; y++)
+            float playerX = playerTransform.position.x;
+
+            if (activeChunks.Count > 0 && activeChunks[0].position.x + activeChunks[0].width < playerX - recycleThreshold)
             {
-                for (int x = 0; x < widthTiles; x++)
-                {
-                    Vector3 tilePosition = new Vector3(x - (float)widthTiles/2, y - (float)heightTiles, 0f);
+                RecyclePlatform(activeChunks[0]);
+            }
 
-                    GameObject tilePrefab = (y == heightTiles - 1) ? topTilePrefab : normalTilePrefab;
-
-                    GameObject tile = Instantiate(tilePrefab, chunk.transform);
-                    tile.transform.localPosition = tilePosition;
-                }
+            while (activeChunks[activeChunks.Count - 1].position.x < playerX + recycleThreshold)
+            {
+                GenerateNextPlatform();
             }
         }
 
-    }
-    
-    [Serializable]
-    public class Chunk
-    {
-        public GameObject chunk;
-        public Vector3 position;
-        public int width;
-        public int height;
-
-        public Chunk(GameObject chunk, Vector3 position, int width, int height)
+        public void GenerateNextPlatform()
         {
-            this.chunk = chunk;
-            this.position = position;
-            this.width = width;
-            this.height = height;
+            Chunk chunk = GetChunkFromPool();
+
+            DifficultySettings settings = difficultyManager.CurrentSettings;
+
+            int platformWidthTiles = Random.Range(settings.minPlatformWidth, settings.maxPlatformWidth);
+            chunk.width = platformWidthTiles;
+            chunk.height = tilesHeight;
+            float gap = Random.Range(settings.minGap, settings.maxGap);
+
+            if (activeChunks.Count > 0)
+            {
+                lastGeneratedX = activeChunks[activeChunks.Count - 1].position.x + activeChunks[activeChunks.Count - 1].width + gap;
+            }
+
+            float t = Time.time * settings.frequency;
+            int i = activeChunks.Count();
+            float a = Mathf.Sin(t + i);
+            float b = Mathf.Cos(t + i);
+            float y = settings.amplitude * Mathf.Max(a, b);
+            Vector3 chunkPosition = new Vector3(lastGeneratedX, y, 0f);
+            chunk.chunk.transform.position = chunkPosition;
+            chunk.position = chunkPosition;
+            platformTileGenerator.GenerateTiles(chunk.chunk, platformWidthTiles, tilesHeight);
+
+            obstacleGenerator.GenerateObstacles(chunk.chunk, platformWidthTiles, tilesHeight);
+            activeChunks.Add(chunk);
+        }
+
+
+        
+        public void RecyclePlatform(Chunk chunk)
+        {
+            activeChunks.Remove(chunk);
+            chunk.chunk.SetActive(false);
+            chunkPool.Enqueue(chunk);
+        }
+
+        private Chunk GetChunkFromPool()
+        {
+            if (chunkPool.Count > 0)
+            {
+                Chunk chunk = chunkPool.Dequeue();
+                chunk.chunk.SetActive(true);
+                return chunk;
+            }
+            return chunkGenerator.GenerateChunk(0, 0, tilesHeight);
         }
     }
 }

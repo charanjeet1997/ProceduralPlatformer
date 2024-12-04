@@ -10,7 +10,7 @@ namespace Games.Platformer2D
 		#region PRIVATE_VARS
 
 		[SerializeField] private PlatformGenerator platformGenerator;
-		
+		[SerializeField] private Player player;
 
 		#endregion
 
@@ -19,6 +19,12 @@ namespace Games.Platformer2D
 		#endregion
 
 		#region UNITY_CALLBACKS
+
+		private IEnumerator Start()
+		{
+			yield return new WaitForEndOfFrame();
+			player.transform.position = platformGenerator.StartPosition;
+		}
 
 		#endregion
 

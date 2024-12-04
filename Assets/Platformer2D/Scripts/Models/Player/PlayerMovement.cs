@@ -5,48 +5,78 @@ namespace Games.Platformer2D
 {
     public class PlayerMovement : MonoBehaviour
     {
-        [SerializeField] private float moveSpeed = 5f; // Speed of horizontal movement
-        [SerializeField] private float jumpForce = 10f; // Force applied when jumping
-        [SerializeField] private LayerMask groundLayer; // Layer used to detect ground
+        [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] private float jumpForce = 10f;
+        [SerializeField] private float fallMultiplier = 2.5f; // Multiplier to increase downward speed
+        [SerializeField] private LayerMask groundLayer;
         [SerializeField] private Vector2 groundSensorOffset;
+        [SerializeField] private Vector2 groundSensorSize;
+
         private Rigidbody2D rb;
         [SerializeField] private bool isGrounded;
+
+        private int jumpCount = 0;
+        private const int maxJumpCount = 2;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
         }
 
-
         private void Update()
         {
-            // Check if the player is grounded
-            isGrounded = Physics2D.OverlapCircle((Vector2)transform.position + groundSensorOffset, 0.1f, groundLayer);
+            isGrounded = CheckGrounded();
 
-            // Handle jump input
-            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                Jump();
+                if (isGrounded || jumpCount < maxJumpCount)
+                {
+                    float jumpForce = jumpCount == 0 ? this.jumpForce : this.jumpForce * 1.5f;
+                    Jump(jumpForce);
+                }
             }
         }
 
         private void FixedUpdate()
         {
-            // Automatically move horizontally
             if (isGrounded)
             {
                 rb.linearVelocity = new Vector2(moveSpeed, rb.linearVelocity.y);
+                jumpCount = 0;
+            }
+            else
+            {
+                rb.linearVelocity = new Vector2(moveSpeed, rb.linearVelocity.y);
+
+                // Apply fall multiplier if the player is falling
+                if (rb.linearVelocity.y < 0)
+                {
+                    rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
+                }
+                else
+                {
+                    rb.linearVelocity += Vector2.up * Physics2D.gravity.y  * Time.fixedDeltaTime;
+                }
             }
         }
 
-        private void Jump()
+        private bool CheckGrounded()
+        {
+            RaycastHit2D hit = Physics2D.BoxCast((Vector2)transform.position + groundSensorOffset,
+                groundSensorSize, 0f, Vector2.down, 0.1f, groundLayer);
+
+            return hit.collider != null;
+        }
+
+        private void Jump(float jumpForce)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            jumpCount++;
         }
 
         private void OnDrawGizmos()
         {
-            Gizmos.DrawWireSphere((Vector2)transform.position + groundSensorOffset, 0.1f);
+            Gizmos.DrawWireCube((Vector2)transform.position + groundSensorOffset, groundSensorSize);
         }
     }
 }
