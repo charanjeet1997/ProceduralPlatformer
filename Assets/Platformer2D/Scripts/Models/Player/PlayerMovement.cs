@@ -46,7 +46,7 @@ namespace Games.Platformer2D
             }
             else
             {
-                rb.linearVelocity = new Vector2(moveSpeed, rb.linearVelocity.y);
+                rb.linearVelocity = new Vector2(moveSpeed/2, rb.linearVelocity.y);
 
                 // Apply fall multiplier if the player is falling
                 if (rb.linearVelocity.y < 0)

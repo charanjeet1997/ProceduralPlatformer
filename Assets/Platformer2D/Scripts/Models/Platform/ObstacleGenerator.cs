@@ -6,8 +6,8 @@ namespace Games.Platformer2D
 {
     public class ObstacleGenerator : IObstacleGenerator
     {
-        private readonly GameObject[] obstaclePrefabs;
-        private readonly float obstacleSpawnChance;
+        private GameObject[] obstaclePrefabs;
+        private float obstacleSpawnChance;
 
         public ObstacleGenerator(GameObject[] obstaclePrefabs, float obstacleSpawnChance = 0.3f)
         {
@@ -20,7 +20,7 @@ namespace Games.Platformer2D
             if (Random.value < obstacleSpawnChance)
             {
                 GameObject obstaclePrefab = obstaclePrefabs[Random.Range(0, obstaclePrefabs.Length)];
-                GameObject obstacle = GameObject.Instantiate(obstaclePrefab, chunk.transform.position,quaternion.identity);
+                GameObject obstacle = GameObject.Instantiate(obstaclePrefab, chunk.transform.position + new Vector3((float)widthTiles/2,0,0),quaternion.identity); 
                 
             }
         }

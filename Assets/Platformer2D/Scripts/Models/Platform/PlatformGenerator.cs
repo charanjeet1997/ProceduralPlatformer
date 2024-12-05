@@ -65,14 +65,17 @@ namespace Games.Platformer2D
 
         private void Start()
         {
+            float t = 0;
             for (int i = 0; i < platformsCount; i++)
             {
                 difficultyManager.SetDifficulty(currentDifficulty);
-                GenerateNextPlatform();
-                startPosition = activeChunks[0].chunk.transform.position + new Vector3(1, 0, 0);
+                GeneratePlatforms(t);
+                t += Time.unscaledDeltaTime * frequency;
             }
+            startPosition =  activeChunks[0].chunk.transform.position + new Vector3(1, 0, 0);
         }
 
+        private float t;
         private void Update()
         {
             float playerX = playerTransform.position.x;
@@ -88,7 +91,7 @@ namespace Games.Platformer2D
             }
         }
 
-        public void GenerateNextPlatform()
+        public void GeneratePlatforms(float time)
         {
             Chunk chunk = GetChunkFromPool();
 
@@ -104,7 +107,7 @@ namespace Games.Platformer2D
                 lastGeneratedX = activeChunks[activeChunks.Count - 1].position.x + activeChunks[activeChunks.Count - 1].width + gap;
             }
 
-            float t = Time.time * settings.frequency;
+            t += Time.unscaledDeltaTime * settings.frequency;
             int i = activeChunks.Count();
             float a = Mathf.Sin(t + i);
             float b = Mathf.Cos(t + i);
@@ -113,7 +116,32 @@ namespace Games.Platformer2D
             chunk.chunk.transform.position = chunkPosition;
             chunk.position = chunkPosition;
             platformTileGenerator.GenerateTiles(chunk.chunk, platformWidthTiles, tilesHeight);
+            activeChunks.Add(chunk);
+        }
 
+        public void GenerateNextPlatform()
+        {
+            Chunk chunk = GetChunkFromPool();
+            DifficultySettings settings = difficultyManager.CurrentSettings;
+            int platformWidthTiles = Random.Range(settings.minPlatformWidth, settings.maxPlatformWidth);
+            chunk.width = platformWidthTiles;
+            chunk.height = tilesHeight;
+            float gap = Random.Range(settings.minGap, settings.maxGap);
+
+            if (activeChunks.Count > 0)
+            {
+                lastGeneratedX = activeChunks[activeChunks.Count - 1].position.x + activeChunks[activeChunks.Count - 1].width + gap;
+            }
+
+            t += Time.time * settings.frequency;
+            int i = activeChunks.Count();
+            float a = Mathf.Sin(t + i);
+            float b = Mathf.Cos(t + i);
+            float y = settings.amplitude * Mathf.Max(a, b);
+            Vector3 chunkPosition = new Vector3(lastGeneratedX, y, 0f);
+            chunk.chunk.transform.position = chunkPosition;
+            chunk.position = chunkPosition;
+            platformTileGenerator.GenerateTiles(chunk.chunk, platformWidthTiles, tilesHeight);
             obstacleGenerator.GenerateObstacles(chunk.chunk, platformWidthTiles, tilesHeight);
             activeChunks.Add(chunk);
         }
@@ -125,6 +153,11 @@ namespace Games.Platformer2D
             activeChunks.Remove(chunk);
             chunk.chunk.SetActive(false);
             chunkPool.Enqueue(chunk);
+        }
+
+        private Chunk CreateNewChunk()
+        {
+            return chunkGenerator.GenerateChunk(0, 0, tilesHeight);
         }
 
         private Chunk GetChunkFromPool()

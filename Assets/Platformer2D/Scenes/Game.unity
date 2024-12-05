@@ -298,7 +298,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  jumpForce: 7
+  jumpForce: 10
   fallMultiplier: 5
   groundLayer:
     serializedVersion: 2
@@ -1045,24 +1045,24 @@ MonoBehaviour:
     maxPlatformWidth: 8
     minGap: 2
     maxGap: 3
-    amplitude: 0.5
-    frequency: 0.5
+    amplitude: 2.5
+    frequency: 5
   mediumSettings:
-    obstacleSpawnChance: 0.2
+    obstacleSpawnChance: 0.5
     minPlatformWidth: 6
     maxPlatformWidth: 8
     minGap: 1.5
     maxGap: 4
-    amplitude: 1
-    frequency: 1
+    amplitude: 3
+    frequency: 5
   hardSettings:
-    obstacleSpawnChance: 0.2
+    obstacleSpawnChance: 0.8
     minPlatformWidth: 6
     maxPlatformWidth: 9
     minGap: 2.5
     maxGap: 5
-    amplitude: 1.5
-    frequency: 1.5
+    amplitude: 4
+    frequency: 6
 --- !u!114 &2036713463
 MonoBehaviour:
   m_ObjectHideFlags: 0
